@@ -24,11 +24,6 @@ import { extensionLoader } from "../extensions/extension-loader";
 import { extensionManager } from "../extensions/extension-manager";
 import { extensionsStore } from "../extensions/extensions-store";
 import { filesystemProvisionerStore } from "./extension-filesystem";
-import packageInfo from "../../package.json"
-
-if (isDevelopment || isTestEnv) {
-  packageInfo.lens.extensions.push("example-extension")
-}
 
 const workingDir = path.join(app.getPath("appData"), appName);
 let proxyPort: number;
