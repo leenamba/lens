@@ -5,8 +5,7 @@ import fse from "fs-extra"
 import { action, observable, toJS } from "mobx"
 import path from "path"
 import { BaseStore } from "../common/base-store"
-
-type LensExtensionId = string;
+import { LensExtensionId } from "../extensions/lens-extension"
 
 interface FSProvisionModel {
   extensions: Record<string, string>; // extension names to paths

@@ -6,6 +6,8 @@ export type TelemetryPreferencesModel = {
 }
 
 export class TelemetryPreferencesStore extends Store.ExtensionStore<TelemetryPreferencesModel> {
+  enabled = true;
+
   private constructor() {
     super({
       configName: "preferences-store",
@@ -15,21 +17,13 @@ export class TelemetryPreferencesStore extends Store.ExtensionStore<TelemetryPre
     })
   }
 
-  get enabled() {
-    return this.data.enabled
-  }
-
-  set enabled(v: boolean) {
-    this.data.enabled = v
-  }
-
-  protected fromStore(data: TelemetryPreferencesModel): void {
-    this.data = data
+  protected fromStore({ enabled }: TelemetryPreferencesModel): void {
+    this.enabled = enabled
   }
 
   toJSON(): TelemetryPreferencesModel {
     return toJS({
-      enabled: this.data.enabled
+      enabled: this.enabled
     }, {
       recurseEverything: true
     })
