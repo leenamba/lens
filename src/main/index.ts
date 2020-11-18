@@ -5,7 +5,7 @@ import "../common/prometheus-providers"
 import * as Mobx from "mobx"
 import * as LensExtensions from "../extensions/core-api";
 import { app, dialog } from "electron"
-import { appName, isDevelopment, isTestEnv } from "../common/vars";
+import { appName } from "../common/vars";
 import path from "path"
 import { LensProxy } from "./lens-proxy"
 import { WindowManager } from "./window-manager";
