@@ -1,4 +1,4 @@
-module.exports =  {
+module.exports = {
   ignorePatterns: ["src/extensions/npm/extensions/dist/**/*"],
   overrides: [
     {
@@ -13,12 +13,14 @@ module.exports =  {
       env: {
         node: true
       },
-      parserOptions:  {
+      parserOptions: {
         ecmaVersion: 2018,
         sourceType: 'module',
       },
       rules: {
-        "indent": ["error", 2],
+        "indent": ["error", 2, {
+          "SwitchCase": 1,
+        }],
         "no-unused-vars": "off",
       }
     },
@@ -32,10 +34,10 @@ module.exports =  {
         "__mocks__/*.ts",
       ],
       parser: "@typescript-eslint/parser",
-      extends:  [
+      extends: [
         'plugin:@typescript-eslint/recommended',
       ],
-      parserOptions:  {
+      parserOptions: {
         ecmaVersion: 2018,
         sourceType: 'module',
       },
@@ -47,7 +49,9 @@ module.exports =  {
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/no-empty-interface": "off",
-        "indent": ["error", 2]
+        "indent": ["error", 2, {
+          "SwitchCase": 1,
+        }]
       },
     },
     {
@@ -55,10 +59,10 @@ module.exports =  {
         "src/renderer/**/*.tsx",
       ],
       parser: "@typescript-eslint/parser",
-      extends:  [
+      extends: [
         'plugin:@typescript-eslint/recommended',
       ],
-      parserOptions:  {
+      parserOptions: {
         ecmaVersion: 2018,
         sourceType: 'module',
         jsx: true,
@@ -75,7 +79,9 @@ module.exports =  {
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/no-empty-function": "off",
-        "indent": ["error", 2]
+        "indent": ["error", 2, {
+          "SwitchCase": 1,
+        }]
       },
     }
   ]

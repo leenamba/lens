@@ -10,6 +10,8 @@ import { Router } from "./router"
 import { ClusterManager } from "./cluster-manager"
 import { ContextHandler } from "./context-handler";
 import logger from "./logger"
+import { Readable } from "stream";
+import _ from "lodash";
 
 export class LensProxy {
   protected origin: string
@@ -73,12 +75,15 @@ export class LensProxy {
       proxySocket.connect(connectOpts, () => {
         proxySocket.write(`${req.method} ${pUrl.path} HTTP/1.1\r\n`)
         proxySocket.write(`Host: ${apiUrl.host}\r\n`)
-        for (let i = 0; i < req.rawHeaders.length; i += 2) {
-          const key = req.rawHeaders[i]
-          if (key !== "Host" && key !== "Authorization") {
-            proxySocket.write(`${req.rawHeaders[i]}: ${req.rawHeaders[i+1]}\r\n`)
+
+        for (const [key, value] of _.chunk(req.rawHeaders, 2)) {
+          if (["Host", "Authorization"].includes(key)) {
+            continue
           }
+
+          proxySocket.write(`${key}: ${value}\r\n`)
         }
+
         proxySocket.write("\r\n")
         proxySocket.write(head)
       })
@@ -166,6 +171,12 @@ export class LensProxy {
   protected async handleRequest(proxy: httpProxy, req: http.IncomingMessage, res: http.ServerResponse) {
     const cluster = this.clusterManager.getClusterForRequest(req)
     if (cluster) {
+      if (!cluster.initialized) {
+        res.statusCode = 404
+        Readable.from(`cluster: ${cluster.name} is not initialized`).pipe(res).end()
+        return
+      }
+
       const proxyTarget = await this.getProxyTarget(req, cluster.contextHandler)
       if (proxyTarget) {
         // allow to fetch apis in "clusterId.localhost:port" from "localhost:port"
