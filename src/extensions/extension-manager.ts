@@ -1,10 +1,11 @@
 import type { LensExtensionId, LensExtensionManifest } from "./lens-extension"
 import path from "path"
 import os from "os"
+import fs from "fs-extra"
 import child_process from "child_process";
-import fse from "fs-extra"
 import logger from "../main/logger"
 import { extensionPackagesRoot } from "./extension-loader"
+import { getBundledExtensions } from "../common/utils/app-version"
 
 export interface InstalledExtension {
   readonly manifest: LensExtensionManifest;
@@ -59,28 +60,28 @@ export class ExtensionManager {
 
   async load(): Promise<Map<LensExtensionId, InstalledExtension>> {
     logger.info("[EXTENSION-MANAGER] loading extensions from " + this.extensionPackagesRoot)
-    if (await fse.pathExists(path.join(this.extensionPackagesRoot, "package-lock.json"))) {
-      await fse.remove(path.join(this.extensionPackagesRoot, "package-lock.json"))
+    if (fs.existsSync(path.join(this.extensionPackagesRoot, "package-lock.json"))) {
+      await fs.remove(path.join(this.extensionPackagesRoot, "package-lock.json"))
     }
     try {
-      await fse.access(this.inTreeFolderPath, fse.constants.W_OK)
+      await fs.access(this.inTreeFolderPath, fs.constants.W_OK)
       this.bundledFolderPath = this.inTreeFolderPath
     } catch {
       // we need to copy in-tree extensions so that we can symlink them properly on "npm install"
-      await fse.remove(this.inTreeTargetPath)
-      await fse.ensureDir(this.inTreeTargetPath)
-      await fse.copy(this.inTreeFolderPath, this.inTreeTargetPath)
+      await fs.remove(this.inTreeTargetPath)
+      await fs.ensureDir(this.inTreeTargetPath)
+      await fs.copy(this.inTreeFolderPath, this.inTreeTargetPath)
       this.bundledFolderPath = this.inTreeTargetPath
     }
-    await fse.ensureDir(this.nodeModulesPath)
-    await fse.ensureDir(this.localFolderPath)
+    await fs.ensureDir(this.nodeModulesPath)
+    await fs.ensureDir(this.localFolderPath)
     return await this.loadExtensions();
   }
 
   protected async getByManifest(manifestPath: string, { isBundled = false } = {}): Promise<InstalledExtension> {
     let manifestJson: LensExtensionManifest;
     try {
-      await fse.access(manifestPath, fse.constants.F_OK); // check manifest file for existence
+      fs.accessSync(manifestPath, fs.constants.F_OK); // check manifest file for existence
       manifestJson = __non_webpack_require__(manifestPath)
       this.packagesJson.dependencies[manifestJson.name] = path.dirname(manifestPath)
 
@@ -113,9 +114,8 @@ export class ExtensionManager {
 
   async loadExtensions() {
     const bundledExtensions = await this.loadBundledExtensions()
-    const bundledNames = bundledExtensions.map(ext => ext.manifest.name)
-    const localExtensions = await this.loadFromFolder(this.localFolderPath, bundledNames)
-    await fse.writeFile(path.join(this.packageJsonPath), JSON.stringify(this.packagesJson, null, 2), { mode: 0o600 })
+    const localExtensions = await this.loadFromFolder(this.localFolderPath)
+    await fs.writeFile(path.join(this.packageJsonPath), JSON.stringify(this.packagesJson, null, 2), { mode: 0o600 })
     await this.installPackages()
     const extensions = bundledExtensions.concat(localExtensions)
     return new Map(extensions.map(ext => [ext.manifestPath, ext]));
@@ -124,8 +124,12 @@ export class ExtensionManager {
   async loadBundledExtensions() {
     const extensions: InstalledExtension[] = []
     const folderPath = this.bundledFolderPath
-    const paths = await fse.readdir(folderPath);
+    const bundledExtensions = getBundledExtensions()
+    const paths = await fs.readdir(folderPath);
     for (const fileName of paths) {
+      if (!bundledExtensions.includes(fileName)) {
+        continue
+      }
       const absPath = path.resolve(folderPath, fileName);
       const manifestPath = path.resolve(absPath, "package.json");
       const ext = await this.getByManifest(manifestPath, { isBundled: true }).catch(() => null)
@@ -137,27 +141,26 @@ export class ExtensionManager {
     return extensions
   }
 
-  async loadFromFolder(folderPath: string, bundledExtensions: string[]): Promise<InstalledExtension[]> {
+  async loadFromFolder(folderPath: string): Promise<InstalledExtension[]> {
+    const bundledExtensions = getBundledExtensions()
     const extensions: InstalledExtension[] = []
-    const paths = await fse.readdir(folderPath);
+    const paths = await fs.readdir(folderPath);
     for (const fileName of paths) {
       if (bundledExtensions.includes(fileName)) { // do no allow to override bundled extensions
         continue
       }
       const absPath = path.resolve(folderPath, fileName);
-      if (!(await fse.pathExists(absPath))) {
+      if (!fs.existsSync(absPath)) {
         continue
       }
-      const lstat = await fse.lstat(absPath)
+      const lstat = await fs.lstat(absPath)
       if (!lstat.isDirectory() && !lstat.isSymbolicLink()) { // skip non-directories
         continue
       }
-
-      try {
-        const manifestPath = path.resolve(absPath, "package.json");
-        extensions.push(await this.getByManifest(manifestPath))
-      } catch (_err) {
-        // ignore error
+      const manifestPath = path.resolve(absPath, "package.json");
+      const ext = await this.getByManifest(manifestPath).catch(() => null)
+      if (ext) {
+        extensions.push(ext)
       }
     }
 
