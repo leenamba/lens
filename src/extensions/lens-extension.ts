@@ -50,10 +50,6 @@ export class LensExtension {
     return filesystemProvisionerStore.requestDirectory(this.id)
   }
 
-  async migrate(appVersion: string) {
-    // mock
-  }
-
   get description() {
     return this.manifest.description
   }
