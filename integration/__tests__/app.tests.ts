@@ -7,9 +7,6 @@
 import { Application } from "spectron"
 import * as util from "../helpers/utils"
 import { spawnSync } from "child_process"
-import { extensionLoader } from "../../src/extensions/extension-loader"
-import { LensExtension } from "../../src/extensions/lens-extension"
-import { when } from "mobx"
 
 const describeif = (condition: boolean) => condition ? describe : describe.skip
 const itif = (condition: boolean) => condition ? it : it.skip
