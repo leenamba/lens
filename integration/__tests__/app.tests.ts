@@ -74,25 +74,6 @@ describe("Lens integration tests", () => {
       await app.client.keys(['Meta', 'Q'])
       await app.client.keys('Meta')
     })
-
-    it.skip("should register all in tree extensions", async () => {
-      // TODO: skipping since it doesn't seem like "index.ts" is being run.
-
-      await extensionLoader.whenLoaded
-      const extensions: LensExtension[] = Array.from((extensionLoader as any).instances.values())
-      const extensionNames = new Set(extensions.map(e => e.manifest.name))
-
-      const expected = [
-        "telemetry",
-        "pod-menu",
-        "node-menu",
-        "metrics-cluster-feature",
-        "license-menu-item",
-        "support-page",
-        "example-extension",
-      ]
-      expect(extensionNames).toEqual(new Set(expected))
-    })
   })
 
   const minikubeReady = (): boolean => {
